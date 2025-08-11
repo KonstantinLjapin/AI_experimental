@@ -8,4 +8,4 @@ ulimit -v unlimited
 ulimit -a
 
 # Затем запустить скрипт
-python use_case.py
+python mistral_worker.py

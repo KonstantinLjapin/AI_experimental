@@ -4,7 +4,7 @@ import time
 print("загрузка модели\n")
 # Пути к модели
 MODEL_DIR = "./models"
-MODEL_FILE = "mistral-7b-instruct-v0.2.Q4_K_M.gguf"  # Используем более легкую модель
+MODEL_FILE = "mistral-7b-instruct-v0.2.Q2_K.gguf"  # Используем более легкую модель
 MODEL_PATH = os.path.join(MODEL_DIR, MODEL_FILE)
 
 if not os.path.exists(MODEL_PATH):
@@ -16,7 +16,7 @@ model = AutoModelForCausalLM.from_pretrained(
     model_type="mistral",
     gpu_layers=0,
     threads=8,               # Уменьшаем количество потоков
-    context_length=2048,     # Уменьшаем длину контекста
+    context_length=1024,     # Уменьшаем длину контекста
     mmap=True,
     mlock=False              # Отключаем блокировку памяти
 )
@@ -25,7 +25,7 @@ print("модель загружена\n")
 
 prompt = """
 <s>[INST] <<SYS>>
-Ты — русскоязычный, грамотно без транслита.
+Ты — русскоязычный, грамотно, коротко, ёмко, без транслита.
 <</SYS>>
 Объясни образование зиготы[/INST]
 """
@@ -36,10 +36,13 @@ start = time.time()
 # Генерируем ответ
 output = model(
     prompt,
-    max_new_tokens=256,
-    temperature=0.7,
-    top_p=0.9,
-    repetition_penalty=1.1
+    max_new_tokens=512,       # меньше токенов = быстрее
+    temperature=0.1,         # низкая температура = меньше случайности, быстрее выбор
+    top_p=0.95,              # высокое top_p не влияет на скорость напрямую, но с низким temperature работает стабильно
+    top_k=2,                # ограничение количества рассматриваемых вариантов
+    repetition_penalty=1.0,  # без штрафа за повторения = быстрее
+    threads=int(os.cpu_count()),  # максимальное количество потоков CPU
+    stream=False             # без потоковой выдачи = быстрее
 )
 
 duration = time.time() - start
